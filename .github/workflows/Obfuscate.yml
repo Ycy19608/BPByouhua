@@ -1,11 +1,11 @@
-name: Build Obfuscated BPB Panel
+name: Build and Obfuscate BPB Panel
 
 on:
   push:
     branches:
       - main
   schedule:
-    # Runs everyday at 1:00 AM UTC
+    # 每天凌晨1:00运行
     - cron: "0 1 * * *"
 
 permissions:
@@ -14,43 +14,42 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 1  # 只獲取最新提交，加快速度
 
-      - name: Setup Node.js
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Node.js 环境
         uses: actions/setup-node@v4
         with:
-          node-version: "20"  # 指定具體版本而不是 'latest'
-          cache: 'npm'        # 啟用 npm 緩存
+          node-version: "latest"
 
-      - name: Install javascript-obfuscator
-        run: npm install -g javascript-obfuscator
+      - name: 安装依赖项
+        run: |
+          npm install -g javascript-obfuscator
 
-      - name: Download BPB worker script
-        run: curl -o origin.js https://raw.githubusercontent.com/bia-pain-bache/BPB-Worker-Panel/main/build/unobfuscated-worker.js
+      - name: 下载 BPB worker.js
+        run: |
+          wget -O origin.js https://raw.githubusercontent.com/bia-pain-bache/BPB-Worker-Panel/main/build/unobfuscated-worker.js
 
-      - name: Obfuscate JavaScript
+      - name: 混淆 BPB worker.js
         run: |
           javascript-obfuscator origin.js --output _worker.js \
             --compact true \
-            --control-flow-flattening true \
-            --control-flow-flattening-threshold 1 \
-            --dead-code-injection true \
-            --dead-code-injection-threshold 1 \
-            --identifier-names-generator hexadecimal \
-            --rename-globals true \
+            --control-flow-flattening false \
+            --dead-code-injection false \
+            --identifier-names-generator mangled \
+            --rename-globals false \
             --string-array true \
             --string-array-encoding 'rc4' \
-            --string-array-threshold 1 \
+            --string-array-threshold 0.75 \
             --transform-object-keys true \
             --unicode-escape-sequence true
 
-      - name: Commit and push changes
+      - name: 提交更改
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           branch: main
-          commit_message: '⬆️ Update obfuscated BPB panel'
+          commit_message: ':arrow_up: 更新最新的 BPB 面板'
           commit_author: 'github-actions[bot] <github-actions[bot]@users.noreply.github.com>'
+          push_options: '--set-upstream'
